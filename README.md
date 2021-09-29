@@ -2,7 +2,7 @@
 
 ![CI](https://github.com/grumply/pure-project-reanimated/workflows/CI/badge.svg)
 
-This repo builds on [pure-project-skeleton](https://github.com/grumply/pure-project-skeleton) with [pure-admin](https://github.com/grumply/pure-admin) and [pure-conjurer](https://github.com/grumply/pure-conjurer) as a simple starting point for resource-oriented web applications.
+This repo builds on [pure-project-skeleton](https://github.com/grumply/pure-simple-blog) with [pure-admin](https://github.com/grumply/pure-admin) and [pure-conjurer](https://github.com/grumply/pure-conjurer) as a simple starting point for resource-oriented web applications.
 
 ## First run
 
