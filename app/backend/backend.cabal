@@ -1,0 +1,46 @@
+cabal-version: 1.12
+
+-- This file has been generated from .package.yaml by hpack version 0.32.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 5d40e38fdc2d584eb12b6831cf64b376f6bf90385af0d634c7db9fbf0330f448
+
+name:           backend
+version:        0.1.0.0
+synopsis:       backend server
+category:       Web
+author:         <Author>
+maintainer:     <Author>
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+
+executable backend
+  main-is: Main.hs
+  other-modules:
+      Connection
+      Markdown
+      Server
+      Server.Config
+      Paths_backend
+  hs-source-dirs:
+      src
+  default-extensions: AutoDeriveTypeable BangPatterns ConstraintKinds DataKinds DefaultSignatures DeriveDataTypeable DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable DoAndIfThenElse EmptyCase EmptyDataDecls ExistentialQuantification FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralizedNewtypeDeriving ImplicitParams InstanceSigs KindSignatures LambdaCase MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings PartialTypeSignatures PatternGuards PatternSynonyms PolyKinds RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TupleSections TypeApplications TypeFamilies TypeFamilyDependencies TypeOperators TypeSynonymInstances ViewPatterns TemplateHaskell BlockArguments PostfixOperators DerivingVia DerivingStrategies
+  ghc-options: -Wall -fno-warn-partial-type-signatures -fno-warn-missing-methods -fno-warn-unused-do-bind -rtsopts -threaded
+  ghcjs-options: -threaded -dedupe -DGHCJS_BROWSER -DGHCJS_GC_INTERVAL=3000000
+  build-depends:
+      base
+    , pandoc
+    , pure-admin
+    , pure-conjurer
+    , pure-elm
+    , pure-json
+    , pure-server
+    , pure-sorcerer
+    , pure-tagsoup
+    , pure-txt
+    , pure-websocket
+    , shared
+    , yaml
+  default-language: Haskell2010
