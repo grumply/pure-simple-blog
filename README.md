@@ -1,4 +1,4 @@
-# Multi-package Pure Skeleton with Development Environment
+# Multi-package Pure.hs Example Blog with Development Environment
 
 ![CI](https://github.com/grumply/pure-project-reanimated/workflows/CI/badge.svg)
 
