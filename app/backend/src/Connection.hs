@@ -1,6 +1,5 @@
-module Connection 
-  ( Connection(..)
-  ) where
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+module Connection (Connection(..)) where
 
 import Shared
 import Markdown
@@ -9,14 +8,15 @@ import Pure.Admin as Admin
 import Pure.Conjurer
 import Pure.Elm.Component as Pure
 import Pure.WebSocket as WS
-import Pure.Sorcerer as Sorcerer
 
-import Control.Monad
-
-data Connection = Connection { admin :: Username, socket :: WebSocket }
+data Connection = Connection 
+  { admin  :: Username
+  , socket :: WebSocket 
+  }
 
 instance Component Connection where
-  data Model Connection = Model { adminToken :: Maybe (Token Admin) }
+  data Model Connection = Model 
+    { token :: Maybe (Token Admin) }
 
   model = Model Nothing
 
@@ -26,103 +26,48 @@ instance Component Connection where
 
   upon Startup Connection { admin = a, socket } mdl = do
     enact socket (Admin.admin AdminTokenMsg a)
-    enact socket (resourceBackend @RawPost postPermissions postCallbacks) 
-    enact socket (resourceBackend @RawPage pagePermissions pageCallbacks) 
-    enact socket post
-    enact socket page
+    enact socket (resourceReadingBackend @Post def def)
+    enact socket (resourceReadingBackend @Page def def)
     activate socket
     pure mdl
 
-  upon (AdminTokenMsg tm) _ mdl@Model { adminToken } = case tm of
-    GetToken withToken -> withToken adminToken >> pure mdl
-    ClearToken -> pure mdl { adminToken = Nothing }
-    SetToken t -> pure mdl { adminToken = Just t }
+  upon (AdminTokenMsg tm) Connection { socket } mdl@Model { token } = case tm of
+    GetToken withToken -> do
+      withToken token 
+      pure mdl
+    ClearToken -> do
+      WS.remove socket (resourcePublishingAPI @Post)
+      WS.remove socket (resourcePublishingAPI @Page)
+      pure mdl { token = Nothing }
+    SetToken t@(Token (un,_)) -> do
+      enact socket (resourcePublishingBackend @Post un def def) 
+      enact socket (resourcePublishingBackend @Page un def def) 
+      pure mdl { token = Just t }
 
-postPermissions :: Elm (Msg Connection) => Permissions RawPost
-postPermissions = Permissions {..}
-  where
-    canCreate _ = isAdmin AdminTokenMsg
-    canRead   _ = isAdmin AdminTokenMsg
-    canUpdate _ = isAdmin AdminTokenMsg
-    canDelete _ = isAdmin AdminTokenMsg
-    canList     = isAdmin AdminTokenMsg
+instance Producible Post where
+  produce RawPost {..} = pure Post
+    { post     = post
+    , title    = process title
+    , synopsis = process synopsis
+    , content  = process content
+    }
+    
+instance Previewable Post where
+  preview Post {..} = pure PostPreview
+    { post     = post
+    , title    = title
+    , synopsis = synopsis
+    }
 
-postCallbacks :: Elm (Msg Connection) => Callbacks RawPost
-postCallbacks = Callbacks {..}
-  where
-    -- TODO: log failure (case where isNothing)
-    -- TODO: add tagging and tag updates here
-    onCreate ttl = traverse_ $ \RawPost {..} ->
-      Sorcerer.write (PostStream ttl) $ PostCreated Post
-        { title    = process title
-        , synopsis = process synopsis
-        , content  = process content
-        }
+instance Producible Page where
+  produce RawPage {..} = pure Page
+    { page    = page
+    , title   = process title
+    , content = process content
+    }
 
-    onRead   _ _ = def
-
-    -- TODO: add tagging and tag updates here
-    onUpdate ttl = traverse_ $ \RawPost {..} ->
-      Sorcerer.write (PostStream ttl) $ PostUpdated Post
-        { title    = process title
-        , synopsis = process synopsis
-        , content  = process content
-        }
-
-    onDelete ttl deleted = 
-      when deleted do
-        Sorcerer.write (PostStream ttl) PostDeleted
-
-    onList       = def
-
-pagePermissions :: Elm (Msg Connection) => Permissions RawPage
-pagePermissions = Permissions {..}
-  where
-    canCreate _ = isAdmin AdminTokenMsg
-    canRead   _ = isAdmin AdminTokenMsg
-    canUpdate _ = isAdmin AdminTokenMsg
-    canDelete _ = isAdmin AdminTokenMsg
-    canList     = isAdmin AdminTokenMsg
-
-pageCallbacks :: Elm (Msg Connection) => Callbacks RawPage
-pageCallbacks = Callbacks {..}
-  where
-    onCreate ttl = traverse_ $ \RawPage {..} ->
-      Sorcerer.write (PageStream ttl) $ PageCreated Page
-        { title   = process title
-        , content = process content
-        }
-
-    onRead   _ _ = def
-
-    onUpdate ttl = traverse_ $ \RawPage {..} ->
-      Sorcerer.write (PageStream ttl) $ PageUpdated Page
-        { title   = process title
-        , content = process content
-        }
-      
-    onDelete ttl deleted =
-      when deleted do
-        Sorcerer.write (PageStream ttl) PageDeleted
-
-    onList       = def 
-
-post = Endpoints postAPI msgs reqs
-  where
-    msgs = WS.none
-    reqs = handleGetPost <:> WS.none
-
-handleGetPost :: RequestHandler GetPost
-handleGetPost = responding do
-  slug <- acquire
-  Sorcerer.read (PostStream slug) >>= reply
-
-page = Endpoints pageAPI msgs reqs
-  where
-    msgs = WS.none
-    reqs = handleGetPage <:> WS.none
-
-handleGetPage :: RequestHandler GetPage
-handleGetPage = responding do
-  slug <- acquire
-  Sorcerer.read (PageStream slug) >>= reply
+instance Previewable Page where
+  preview Page {..} = pure PagePreview
+    { page  = page 
+    , title = title
+    }

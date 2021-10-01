@@ -11,6 +11,7 @@ in
         , "pure-conjurer"
         , "pure-json"
         , "pure-render"
+        , "pure-router"
         , "pure-sorcerer"
         , "pure-transform"
         , "pure-txt"

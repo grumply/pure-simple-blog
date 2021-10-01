@@ -1,7 +1,5 @@
 {-# language DuplicateRecordFields #-}
-module Server 
-  ( Server(..)
-  ) where
+module Server (Server(..)) where
 
 import Connection 
 import Server.Config
@@ -29,14 +27,6 @@ instance Component Server where
 
   view _ Model {..} = 
     Div <||>
-      [ sorcerer db
+      [ sorcerer (adminDB ++ resourceDB @Post ++ resourceDB @Page)
       , Pure.Server host port (run . Connection admin)
       ]
-
-db = concat 
-  [adminDB
-  ,[listener @PostMsg @Post]
-  ,[listener @PageMsg @Page]
-  ,resourceDB @RawPost
-  ,resourceDB @RawPage
-  ]

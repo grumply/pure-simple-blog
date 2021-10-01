@@ -1,17 +1,15 @@
 {-# language DerivingStrategies, RecordWildCards, TypeFamilies, DeriveGeneric, DeriveAnyClass, CPP, DuplicateRecordFields #-}
 module Shared where
 
-import Pure.Data.Txt
-import Pure.Data.JSON
 import Pure.Conjurer
 import Pure.Conjurer.Form
-import Pure.Elm.Component hiding (pattern Delete)
+import Pure.Data.Txt
+import Pure.Data.JSON
 import Pure.Data.Render ()
-import Pure.Sorcerer
-import Pure.WebSocket as WS
+import Pure.Elm.Component hiding (pattern Delete)
+import Pure.Router
 
 import Data.Hashable
-import Data.Typeable
 import GHC.Generics
 
 newtype Markdown = Markdown Txt
@@ -24,94 +22,87 @@ instance Field Markdown where
     Textarea <| OnInput (withInput onchange) |>
       [ txt initial ]
 
-data RawPost deriving Typeable
-instance IsResource RawPost where
-  data Resource RawPost = RawPost
-    { url      :: Txt
+data Post
+instance IsResource Post where
+
+  data Identifier Post = PostName Txt
+    deriving stock Generic
+    deriving anyclass (ToJSON,FromJSON,Eq,Hashable)
+
+  data Resource Post = RawPost
+    { post     :: Txt
     , title    :: Markdown
     , synopsis :: Markdown
     , content  :: Markdown
     } deriving stock Generic
       deriving anyclass (ToJSON,FromJSON,Form)
+      
+  identifyResource RawPost {..} = PostName post
 
-  root = "/admin_blog"
+  data Product Post = Post
+    { post     :: Txt
+    , title    :: [View]
+    , synopsis :: [View]
+    , content  :: [View]
+    } deriving stock Generic
+      deriving anyclass (ToJSON,FromJSON)
+      
+  identifyProduct Post {..} = PostName post
 
-  slug RawPost {..} = toSlug url
+  data Preview Post = PostPreview
+    { post     :: Txt
+    , title    :: [View]
+    , synopsis :: [View]
+    } deriving stock Generic
+      deriving anyclass (ToJSON,FromJSON)
+      
+  identifyPreview PostPreview {..} = PostName post
 
-data Post = Post
-  { title    :: [View]
-  , synopsis :: [View]
-  , content  :: [View]
-  } deriving stock Generic
-    deriving anyclass (ToJSON,FromJSON)
+  route lift = do
+    path "/:post" do
+      post <- "post"
+      dispatch (lift (PostName post))
+    continue
 
-data PostMsg
-  = PostCreated Post
-  | PostUpdated Post
-  | PostDeleted
-  deriving stock Generic
-  deriving anyclass (ToJSON,FromJSON)
+  locate (PostName p) = p
 
-instance Source PostMsg where
-  data Stream PostMsg = PostStream (Slug RawPost)
+data Page
+instance IsResource Page where
+
+  data Identifier Page = PageName Txt
     deriving stock Generic
-    deriving anyclass Hashable
+    deriving anyclass (ToJSON,FromJSON,Eq,Hashable)
 
-instance Aggregable PostMsg Post where
-  update (PostCreated p) Nothing = Update p
-  update (PostUpdated p) (Just _) = Update p
-  update PostDeleted (Just _) = Delete
-  update _ _ = Ignore
-
-mkRequest "GetPost"
-  [t|Slug RawPost -> Maybe Post|]
-
-postAPI = api msgs reqs
-  where
-    msgs = WS.none
-    reqs = getPost <:> WS.none
-
-data RawPage deriving Typeable
-instance IsResource RawPage where
-  data Resource RawPage = RawPage
-    { url     :: Txt
+  data Resource Page = RawPage
+    { page    :: Txt
     , title   :: Markdown
     , content :: Markdown
     } deriving stock Generic
       deriving anyclass (ToJSON,FromJSON,Form)
+  
+  identifyResource RawPage {..} = PageName page
 
-  root = "/admin_pages"
+  data Product Page = Page
+    { page    :: Txt
+    , title   :: [View]
+    , content :: [View]
+    } deriving stock Generic
+      deriving anyclass (ToJSON,FromJSON)
+  
+  identifyProduct Page {..} = PageName page
+      
+  data Preview Page = PagePreview
+    { page  :: Txt
+    , title :: [View]
+    } deriving stock Generic
+      deriving anyclass (ToJSON,FromJSON)
+      
+  identifyPreview PagePreview {..} = PageName page
 
-  slug RawPage {..} = toSlug url
+  route lift = do
+    path "/:page" do
+      page <- "page"
+      dispatch (lift (PageName page))
+    continue
 
-data Page = Page
-  { title   :: [View]
-  , content :: [View]
-  } deriving stock Generic
-    deriving anyclass (ToJSON,FromJSON)
-
-data PageMsg
-  = PageCreated Page
-  | PageUpdated Page
-  | PageDeleted
-  deriving stock Generic
-  deriving anyclass (ToJSON,FromJSON)
-
-instance Source PageMsg where
-  data Stream PageMsg = PageStream (Slug RawPage)
-    deriving stock Generic
-    deriving anyclass Hashable
-
-instance Aggregable PageMsg Page where
-  update (PageCreated p) Nothing = Update p
-  update (PageUpdated p) (Just _) = Update p
-  update PageDeleted (Just _) = Delete
-  update _ _ = Ignore
-
-mkRequest "GetPage"
-  [t|Slug RawPage -> Maybe Page|]
-
-pageAPI = api msgs reqs
-  where
-    msgs = WS.none
-    reqs = getPage <:> WS.none
+  locate (PageName p) = p
