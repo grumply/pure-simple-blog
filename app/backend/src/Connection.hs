@@ -46,28 +46,24 @@ instance Component Connection where
 
 instance Producible Post where
   produce RawPost {..} = pure Post
-    { post     = post
-    , title    = process title
-    , synopsis = process synopsis
+    { title    = process title
     , content  = process content
     }
     
 instance Previewable Post where
-  preview Post {..} = pure PostPreview
+  preview RawPost { post, synopsis } Post { title } = pure PostPreview
     { post     = post
     , title    = title
-    , synopsis = synopsis
+    , synopsis = process synopsis
     }
 
 instance Producible Page where
   produce RawPage {..} = pure Page
-    { page    = page
-    , title   = process title
-    , content = process content
+    { content = process content
     }
 
 instance Previewable Page where
-  preview Page {..} = pure PagePreview
+  preview RawPage { page, title } _ = pure PagePreview
     { page  = page 
-    , title = title
+    , title = process title
     }

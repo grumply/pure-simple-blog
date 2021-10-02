@@ -14,7 +14,7 @@ import GHC.Generics
 data Config = Config
   { host     :: String
   , port     :: Int
-  , username :: Username
+  , admin    :: Username
   , password :: Password
   } deriving stock Generic
     deriving anyclass (ToJSON,FromJSON)

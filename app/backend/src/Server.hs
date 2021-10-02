@@ -22,7 +22,7 @@ instance Component Server where
     
   initialize _ = do
     Config {..} <- getConfig
-    Admin.initialize username password
+    Admin.initialize admin password
     pure Model {..}
 
   view _ Model {..} = 

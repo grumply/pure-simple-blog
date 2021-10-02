@@ -22,42 +22,42 @@ instance Field Markdown where
     Textarea <| OnInput (withInput onchange) |>
       [ txt initial ]
 
+--------------------------------------------------------------------------------
+-- Post
+
 data Post
-instance IsResource Post where
+data instance Identifier Post = PostName Txt
+  deriving stock Generic
+  deriving anyclass (ToJSON,FromJSON,Eq,Hashable)
 
-  data Identifier Post = PostName Txt
-    deriving stock Generic
-    deriving anyclass (ToJSON,FromJSON,Eq,Hashable)
+data instance Resource Post = RawPost
+  { post     :: Txt
+  , title    :: Markdown
+  , synopsis :: Markdown
+  , content  :: Markdown
+  } deriving stock Generic
+    deriving anyclass (ToJSON,FromJSON,Form)
 
-  data Resource Post = RawPost
-    { post     :: Txt
-    , title    :: Markdown
-    , synopsis :: Markdown
-    , content  :: Markdown
-    } deriving stock Generic
-      deriving anyclass (ToJSON,FromJSON,Form)
-      
-  identifyResource RawPost {..} = PostName post
+instance Identifiable Resource Post where 
+  identify RawPost {..} = PostName post
 
-  data Product Post = Post
-    { post     :: Txt
-    , title    :: [View]
-    , synopsis :: [View]
-    , content  :: [View]
-    } deriving stock Generic
-      deriving anyclass (ToJSON,FromJSON)
-      
-  identifyProduct Post {..} = PostName post
+data instance Product Post = Post
+  { title    :: [View]
+  , content  :: [View]
+  } deriving stock Generic
+    deriving anyclass (ToJSON,FromJSON)
 
-  data Preview Post = PostPreview
-    { post     :: Txt
-    , title    :: [View]
-    , synopsis :: [View]
-    } deriving stock Generic
-      deriving anyclass (ToJSON,FromJSON)
-      
-  identifyPreview PostPreview {..} = PostName post
+data instance Preview Post = PostPreview
+  { post     :: Txt
+  , title    :: [View]
+  , synopsis :: [View]
+  } deriving stock Generic
+    deriving anyclass (ToJSON,FromJSON)
 
+instance Identifiable Preview Post where
+  identify PostPreview {..} = PostName post
+
+instance Routable Post where
   route lift = do
     path "/:post" do
       post <- "post"
@@ -66,39 +66,39 @@ instance IsResource Post where
 
   locate (PostName p) = p
 
+--------------------------------------------------------------------------------
+-- Page
+
 data Page
-instance IsResource Page where
+data instance Identifier Page = PageName Txt
+  deriving stock Generic
+  deriving anyclass (ToJSON,FromJSON,Eq,Hashable)
 
-  data Identifier Page = PageName Txt
-    deriving stock Generic
-    deriving anyclass (ToJSON,FromJSON,Eq,Hashable)
+data instance Resource Page = RawPage
+  { page    :: Txt
+  , title   :: Markdown
+  , content :: Markdown
+  } deriving stock Generic
+    deriving anyclass (ToJSON,FromJSON,Form)
 
-  data Resource Page = RawPage
-    { page    :: Txt
-    , title   :: Markdown
-    , content :: Markdown
-    } deriving stock Generic
-      deriving anyclass (ToJSON,FromJSON,Form)
-  
-  identifyResource RawPage {..} = PageName page
+instance Identifiable Resource Page where
+  identify RawPage {..} = PageName page
 
-  data Product Page = Page
-    { page    :: Txt
-    , title   :: [View]
-    , content :: [View]
-    } deriving stock Generic
-      deriving anyclass (ToJSON,FromJSON)
-  
-  identifyProduct Page {..} = PageName page
-      
-  data Preview Page = PagePreview
-    { page  :: Txt
-    , title :: [View]
-    } deriving stock Generic
-      deriving anyclass (ToJSON,FromJSON)
-      
-  identifyPreview PagePreview {..} = PageName page
+data instance Product Page = Page
+  { content :: [View]
+  } deriving stock Generic
+    deriving anyclass (ToJSON,FromJSON)
+   
+data instance Preview Page = PagePreview
+  { page  :: Txt
+  , title :: [View]
+  } deriving stock Generic
+    deriving anyclass (ToJSON,FromJSON)
 
+instance Identifiable Preview Page where 
+  identify PagePreview {..} = PageName page
+
+instance Routable Page where
   route lift = do
     path "/:page" do
       page <- "page"

@@ -3,14 +3,14 @@ module App (App(..)) where
 
 import Pure.Admin
 import Pure.Conjurer
-import Pure.Elm.Application hiding (run)
+import Pure.Elm.Application hiding (goto,run)
 import Pure.Elm.Component hiding (App)
-import Pure.WebSocket
+import qualified Pure.WebSocket as WS
 
 import Shared
 
 data App = App 
-  { socket :: WebSocket }
+  { socket :: WS.WebSocket }
 
 instance Application App where
   data Route App 
@@ -28,6 +28,14 @@ instance Application App where
   routes = do
     resourceRoutes BlogR
     resourceRoutes PageR
+    path "/blog" do
+      path "/:post" do
+        post <- "post"
+        dispatch (BlogR (ReadProduct "admin" (PostName post)))
+      dispatch (BlogR (ListPreviews (Just "admin")))
+    path "/:page" do
+      page <- "page"
+      dispatch (PageR (ReadProduct "admin" (PageName page)))
     dispatch HomeR
 
   view route App { socket } _ = 
@@ -38,19 +46,12 @@ instance Application App where
         PageR r -> resourcePage @Admin socket r
       ]
 
-instance Theme Page
-instance Theme Post
-
 instance Component (Product Page) where
-  view Page {..} _ = 
-    Article <||>
-      [ Section <||> title
-      , Section <||> content
-      ]
+  view Page {..} _ = Article <||> content
 
 instance Component (Preview Page) where
   view PagePreview {..} _ =
-    Article <||>
+    Article <| OnClick (\_ -> goto (ReadProduct "admin" (PageName page))) |>
       [ Section <||> title ]
 
 instance Component (Product Post) where
@@ -62,6 +63,6 @@ instance Component (Product Post) where
 
 instance Component (Preview Post) where
   view PostPreview {..} _ =
-    Article <||>
+    Article <| OnClick (\_ -> goto (ReadProduct "admin" (PostName post))) |>
       [ Section <||> title
       ]
