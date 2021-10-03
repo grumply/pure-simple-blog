@@ -7,7 +7,6 @@ import Pure.Data.Txt
 import Pure.Data.JSON
 import Pure.Data.Render ()
 import Pure.Elm.Component hiding (pattern Delete)
-import Pure.Router
 
 import Data.Hashable
 import GHC.Generics
@@ -26,12 +25,12 @@ instance Field Markdown where
 -- Post
 
 data Post
-data instance Identifier Post = PostName Txt
+data instance Identifier Post = PostName (Slug Post)
   deriving stock Generic
   deriving anyclass (ToJSON,FromJSON,Eq,Hashable)
 
 data instance Resource Post = RawPost
-  { post     :: Txt
+  { post     :: Slug Post
   , title    :: Markdown
   , synopsis :: Markdown
   , content  :: Markdown
@@ -48,7 +47,7 @@ data instance Product Post = Post
     deriving anyclass (ToJSON,FromJSON)
 
 data instance Preview Post = PostPreview
-  { post     :: Txt
+  { post     :: Slug Post
   , title    :: [View]
   , synopsis :: [View]
   } deriving stock Generic
@@ -57,25 +56,16 @@ data instance Preview Post = PostPreview
 instance Identifiable Preview Post where
   identify PostPreview {..} = PostName post
 
-instance Routable Post where
-  route lift = do
-    path "/:post" do
-      post <- "post"
-      dispatch (lift (PostName post))
-    continue
-
-  locate (PostName p) = p
-
 --------------------------------------------------------------------------------
 -- Page
 
 data Page
-data instance Identifier Page = PageName Txt
+data instance Identifier Page = PageName (Slug Page)
   deriving stock Generic
   deriving anyclass (ToJSON,FromJSON,Eq,Hashable)
 
 data instance Resource Page = RawPage
-  { page    :: Txt
+  { page    :: Slug Page
   , title   :: Markdown
   , content :: Markdown
   } deriving stock Generic
@@ -90,19 +80,10 @@ data instance Product Page = Page
     deriving anyclass (ToJSON,FromJSON)
    
 data instance Preview Page = PagePreview
-  { page  :: Txt
+  { page  :: Slug Page
   , title :: [View]
   } deriving stock Generic
     deriving anyclass (ToJSON,FromJSON)
 
 instance Identifiable Preview Page where 
   identify PagePreview {..} = PageName page
-
-instance Routable Page where
-  route lift = do
-    path "/:page" do
-      page <- "page"
-      dispatch (lift (PageName page))
-    continue
-
-  locate (PageName p) = p

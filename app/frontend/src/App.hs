@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# OPTIONS_GHC -fno-warn-missing-methods -fno-warn-orphans #-}
 module App (App(..)) where
 
@@ -8,6 +9,7 @@ import Pure.Elm.Component hiding (App)
 import qualified Pure.WebSocket as WS
 
 import Shared
+import GHC.Generics
 
 data App = App 
   { socket :: WS.WebSocket }
@@ -15,8 +17,8 @@ data App = App
 instance Application App where
   data Route App 
     = HomeR 
-    | BlogR (ResourceRoute Post)
-    | PageR (ResourceRoute Page)
+    | BlogR (ResourceRoute Admin Post)
+    | PageR (ResourceRoute Admin Page)
   
   home = HomeR
 
@@ -28,14 +30,6 @@ instance Application App where
   routes = do
     resourceRoutes BlogR
     resourceRoutes PageR
-    path "/blog" do
-      path "/:post" do
-        post <- "post"
-        dispatch (BlogR (ReadProduct "admin" (PostName post)))
-      dispatch (BlogR (ListPreviews (Just "admin")))
-    path "/:page" do
-      page <- "page"
-      dispatch (PageR (ReadProduct "admin" (PageName page)))
     dispatch HomeR
 
   view route App { socket } _ = 
@@ -46,12 +40,28 @@ instance Application App where
         PageR r -> resourcePage @Admin socket r
       ]
 
+instance Pathable (Identifier Page)
+instance Readable Page
+instance Creatable Admin Page where
+  data CreateContext Admin Page = CreatePageContext
+    deriving stock Generic
+    deriving anyclass Pathable
+instance Listable Page
+
+instance Pathable (Identifier Post)
+instance Readable Post
+instance Creatable Admin Post where
+  data CreateContext Admin Post = CreatePostContext
+    deriving stock Generic
+    deriving anyclass Pathable
+instance Listable Post
+
 instance Component (Product Page) where
   view Page {..} _ = Article <||> content
 
 instance Component (Preview Page) where
   view PagePreview {..} _ =
-    Article <| OnClick (\_ -> goto (ReadProduct "admin" (PageName page))) |>
+    Article <| OnClick (\_ -> goto (ReadR @Admin (Read "admin" (PageName page)))) |>
       [ Section <||> title ]
 
 instance Component (Product Post) where
@@ -63,6 +73,6 @@ instance Component (Product Post) where
 
 instance Component (Preview Post) where
   view PostPreview {..} _ =
-    Article <| OnClick (\_ -> goto (ReadProduct "admin" (PostName post))) |>
+    Article <| OnClick (\_ -> goto (ReadR @Admin (Read "admin" (PostName post)))) |>
       [ Section <||> title
       ]
