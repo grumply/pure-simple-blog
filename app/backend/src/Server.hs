@@ -27,6 +27,6 @@ instance Component Server where
 
   view _ Model {..} = 
     Div <||>
-      [ sorcerer (adminDB ++ resourceDB @Post ++ resourceDB @Page)
+      [ sorcerer (adminDB ++ db @Post ++ db @Page)
       , Pure.Server host port (run . Connection admin)
       ]

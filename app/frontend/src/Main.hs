@@ -11,5 +11,5 @@ import App
 main :: IO ()
 main = do
   ws <- clientWS "127.0.0.1" 8081
-  inject body (Component.run (Access ws def def :: Access Admin))
-  inject body (Application.run (App.App ws))
+  inject body (run (Access ws def def :: Access Admin))
+  inject body (execute (App.App ws))

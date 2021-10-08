@@ -6,7 +6,7 @@ import Markdown
 
 import Pure.Admin as Admin
 import Pure.Conjurer
-import Pure.Elm.Component as Pure
+import Pure.Elm.Component as Pure hiding (render)
 import Pure.WebSocket as WS
 
 data Connection = Connection 
@@ -26,8 +26,8 @@ instance Component Connection where
 
   upon Startup Connection { admin = a, socket } mdl = do
     enact socket (Admin.admin AdminTokenMsg a)
-    enact socket (resourceReadingBackend @Post)
-    enact socket (resourceReadingBackend @Page)
+    enact socket (readingBackend @Post unsafeDefaultPermissions def)
+    enact socket (readingBackend @Page unsafeDefaultPermissions def)
     activate socket
     pure mdl
 
@@ -36,39 +36,36 @@ instance Component Connection where
       withToken token 
       pure mdl
     ClearToken -> do
-      WS.remove socket (resourcePublishingAPI @Post)
-      WS.remove socket (resourcePublishingAPI @Page)
+      WS.remove socket (publishingAPI @Post)
+      WS.remove socket (publishingAPI @Page)
       pure mdl { token = Nothing }
     SetToken t@(Token (un,_)) -> do
-      enact socket (resourcePublishingBackend @Post un) 
-      enact socket (resourcePublishingBackend @Page un) 
+      enact socket (publishingBackend @Post unsafeDefaultPermissions def) 
+      enact socket (publishingBackend @Page unsafeDefaultPermissions def) 
       pure mdl { token = Just t }
 
-instance Permissions Post
-instance Permissions Page
-instance Callbacks Post
-instance Callbacks Page
+instance Processable Post
 
 instance Producible Post where
   produce RawPost {..} = pure Post
-    { title    = process title
-    , content  = process content
+    { title    = render title
+    , content  = render content
     }
     
 instance Previewable Post where
-  preview RawPost { post, synopsis } Post { title } = pure PostPreview
-    { post     = post
-    , title    = title
-    , synopsis = process synopsis
+  preview RawPost { synopsis } Post { title } = pure PostPreview
+    { title    = title
+    , synopsis = render synopsis
     }
+
+instance Processable Page
 
 instance Producible Page where
   produce RawPage {..} = pure Page
-    { content = process content
+    { content = render content
     }
 
 instance Previewable Page where
-  preview RawPage { page, title } _ = pure PagePreview
-    { page  = page 
-    , title = process title
+  preview RawPage { title } _ = pure PagePreview
+    { title = render title
     }
