@@ -16,11 +16,6 @@ newtype Markdown = Markdown Txt
   deriving anyclass (ToJSON,FromJSON,Eq)
   deriving (ToTxt,FromTxt) via Txt
 
-instance Fieldable Markdown where
-  field onchange initial = 
-    Textarea <| OnInput (withInput onchange) |>
-      [ txt initial ]
-
 data Post
 data instance Resource Post = RawPost
   { title    :: Markdown
@@ -30,16 +25,16 @@ data instance Resource Post = RawPost
     deriving anyclass (ToJSON,FromJSON,Default)
 
 data instance Context Post = PostContext
-  deriving stock Generic
+  deriving stock (Generic,Eq,Ord)
   deriving anyclass (ToJSON,FromJSON,Pathable,Hashable)
 
 data instance Name Post = PostName (Slug Post)
-  deriving stock Generic
-  deriving anyclass (ToJSON,FromJSON,Pathable,Hashable,Eq)
+  deriving stock (Generic,Eq,Ord)
+  deriving anyclass (ToJSON,FromJSON,Pathable,Hashable)
 
 instance Nameable Post where
   toName RawPost {..} = PostName (fromTxt (toTxt title))
-
+  
 data instance Product Post = Post
   { title    :: [View]
   , content  :: [View]
@@ -60,12 +55,12 @@ data instance Resource Page = RawPage
     deriving anyclass (ToJSON,FromJSON,Default)
 
 data instance Context Page = PageContext
-  deriving stock Generic
+  deriving stock (Generic,Eq,Ord)
   deriving anyclass (ToJSON,FromJSON,Pathable,Hashable)
 
 data instance Name Page = PageName (Slug Page)
-  deriving stock Generic
-  deriving anyclass (ToJSON,FromJSON,Pathable,Hashable,Eq)
+  deriving stock (Generic,Eq,Ord)
+  deriving anyclass (ToJSON,FromJSON,Pathable,Hashable)
 
 instance Nameable Page where
   toName RawPage {..} = PageName (fromTxt (toTxt title))

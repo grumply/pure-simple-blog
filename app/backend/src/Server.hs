@@ -22,6 +22,8 @@ instance Component Server where
     
   initialize _ = do
     Config {..} <- getConfig
+    cache @Post
+    cache @Page
     Admin.initialize admin password
     pure Model {..}
 
