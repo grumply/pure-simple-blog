@@ -16,8 +16,8 @@ data App = App
 instance Application App where
   data Route App 
     = HomeR 
-    | BlogR (C.Route Admin Post)
-    | PageR (C.Route Admin Page)
+    | BlogR (C.Route Post)
+    | PageR (C.Route Page)
   
   home = HomeR
 

@@ -32,6 +32,8 @@ data instance Name Post = PostName (Slug Post)
   deriving stock (Generic,Eq,Ord)
   deriving anyclass (ToJSON,FromJSON,Pathable,Hashable)
 
+instance Routable Post
+
 instance Nameable Post where
   toName RawPost {..} = PostName (fromTxt (toTxt title))
   
@@ -61,6 +63,8 @@ data instance Context Page = PageContext
 data instance Name Page = PageName (Slug Page)
   deriving stock (Generic,Eq,Ord)
   deriving anyclass (ToJSON,FromJSON,Pathable,Hashable)
+
+instance Routable Page
 
 instance Nameable Page where
   toName RawPage {..} = PageName (fromTxt (toTxt title))
