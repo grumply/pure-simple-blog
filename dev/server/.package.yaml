@@ -6,6 +6,8 @@ dependencies:
 - wai
 - wai-app-static
 - warp
+- optparse-applicative
+- bytestring
 default-extensions:
 - AutoDeriveTypeable
 - BangPatterns

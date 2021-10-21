@@ -11,6 +11,7 @@ in
         , "wai-app-static"
         , "warp"
         , "optparse-applicative"
+        , "bytestring"
         ]
     , executables = 
         { server = 

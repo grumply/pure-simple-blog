@@ -6,6 +6,8 @@ import Network.Wai.Handler.Warp
 
 import Options.Applicative
 
+import Data.ByteString as BS
+
 -- import qualified Data.ByteString.Char8          as S8
 -- import qualified Data.ByteString.Lazy           as L
 -- import           Network.HTTP.Types
@@ -39,14 +41,22 @@ main = execParser optsParser >>= staticHTML5Server
 staticHTML5Server :: Opts -> IO ()
 staticHTML5Server os = run 80 app -- (compressing app)
   where
-    -- compressing = gzip def { gzipFiles = GzipCacheFolder "/cache" }
+    -- compressing = gzip def { gzipFiles = GzipCacheFolder "cache" }
     app req send =
       case pathInfo req of
+        []              -> fileServer req { pathInfo = ["index.html"] } send
         ["robots.txt"]  -> fileServer req send
         ["all.js"]      -> fileServer req send
         ["favicon.ico"] -> fileServer req send
         ( "static" : _) -> fileServer req send
-        _               -> fileServer req { pathInfo = ["index.html"] } send
+        _  | Just True <- fmap ("bot" `BS.isInfixOf`) (requestHeaderUserAgent req) ->
+            fileServer req { pathInfo = addHTMLExtension $ "static" : pathInfo req } send
+           | otherwise -> 
+            fileServer req { pathInfo = ["index.html"] } send
 
     fileServer = staticApp (defaultFileServerSettings (root os))
+
+    addHTMLExtension [file] = [file <> ".html"]
+    addHTMLExtension (p:ps) = p:addHTMLExtension ps
+    
 
